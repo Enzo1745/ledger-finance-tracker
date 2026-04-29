@@ -4,9 +4,9 @@ import { login } from "./actions";
 export default async function Login({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; message?: string }>;
+  searchParams: Promise<{ error?: string; message?: string; next?: string }>;
 }) {
-  const { error, message } = await searchParams;
+  const { error, message, next } = await searchParams;
 
   return (
     <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-zinc-950">
@@ -81,6 +81,7 @@ export default async function Login({
             >
               Sign in
             </button>
+            <input type="hidden" name="next" value={next ?? ""} />
           </form>
 
           <div className="my-6 flex items-center gap-3">
@@ -92,7 +93,7 @@ export default async function Login({
           </div>
 
           <a
-            href="/auth/github"
+            href={`/auth/github${next ? `?next=${encodeURIComponent(next)}` : ""}`}
             className="inline-flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 shadow-sm transition-colors hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:ring-offset-white active:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 dark:focus:ring-zinc-100 dark:focus:ring-offset-zinc-900"
           >
             <svg
