@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import DashboardClient from "./DashboardClient";
 
 export default async function Dashboard() {
@@ -8,5 +7,22 @@ export default async function Dashboard() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return <p>No user logged in</p>;
-  return <DashboardClient email={user.email!} />;
+
+  const { data: user_profile, error } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
+
+  if (error || !user_profile) {
+    console.error("Failed to load profile:", error);
+    return <p>Could not load your profile.</p>;
+  }
+
+  return (
+    <DashboardClient
+      email={user.email!}
+      display_name={user_profile.display_name}
+    />
+  );
 }

@@ -1,9 +1,37 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");
+}
+
+export async function updateName(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: user_profile, error } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
+  if (error || !user_profile) {
+    console.error("Failed to load profile:", error);
+    return;
+  }
+
+  const name = formData.get("name") as string;
+
+  await supabase
+    .from("profiles")
+    .update({ display_name: name })
+    .eq("id", user.id);
+
+  revalidatePath("/dashboard");
 }
