@@ -19,10 +19,20 @@ export default async function Dashboard() {
     return <p>Could not load your profile.</p>;
   }
 
+  const { data: transactions_list, error: transactions_error } = await supabase
+    .from("transactions")
+    .select("*");
+  if (transactions_error || !transactions_list) {
+    return <p>Could not fetch transactions</p>;
+  }
+
+  console.log("List of transactions: ", transactions_list);
+
   return (
     <DashboardClient
       email={user.email!}
       display_name={user_profile.display_name}
+      transactions_list={transactions_list}
     />
   );
 }

@@ -4,16 +4,19 @@ import { signOut, updateName } from "./actions";
 interface DashboardClientProps {
   email: string;
   display_name: string | undefined;
+  transactions_list: Array<string>;
 }
 
 export default function DashboardClient({
   email,
   display_name,
+  transactions_list,
 }: DashboardClientProps) {
   return (
     <>
       <p>{email} is logged in!</p>
       {display_name && <p>Name: {display_name}</p>}
+      {transactions_list && <p>List of transactions: {transactions_list}</p>}
       <button onClick={() => signOut()} className="hover:cursor-pointer">
         Sign out
       </button>
