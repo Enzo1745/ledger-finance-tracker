@@ -35,3 +35,28 @@ export async function updateName(formData: FormData) {
 
   revalidatePath("/dashboard");
 }
+
+export async function insertTransaction(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const amountDollars = parseInt(formData.get("amount") as string);
+  if (Number.isNaN(amountDollars)) return;
+
+  const { error } = await supabase.from("transactions").insert({
+    user_id: user.id,
+    amount: Math.round(amountDollars * 100),
+    description: formData.get("description") as string,
+    category: formData.get("category") as string,
+  });
+
+  if (error) {
+    console.error("Failed to insert transaction:", error);
+    return;
+  }
+
+  revalidatePath("/dashboard");
+}
