@@ -1,5 +1,10 @@
 "use client";
-import { signOut, updateName, insertTransaction } from "./actions";
+import {
+  signOut,
+  updateName,
+  addTransaction,
+  deleteTransaction,
+} from "./actions";
 
 interface Transaction {
   id: string;
@@ -30,10 +35,18 @@ export default function DashboardClient({
           <p>List of transactions:</p>
           <ul>
             {transactions_list.map((transaction) => (
-              <li key={transaction.id}>
-                {transaction.category}: {"$" + transaction.amount / 100},{" "}
-                {transaction.date}
-              </li>
+              <div>
+                <li key={transaction.id}>
+                  {transaction.category}: {"$" + transaction.amount / 100},{" "}
+                  {transaction.date}
+                </li>
+                <button
+                  onClick={() => deleteTransaction(transaction.id)}
+                  className="mt-2 inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:ring-offset-white active:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:focus:ring-zinc-100 dark:focus:ring-offset-zinc-900 cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
             ))}
           </ul>
         </div>
@@ -66,7 +79,7 @@ export default function DashboardClient({
         </button>
       </form>
 
-      <form action={insertTransaction}>
+      <form action={addTransaction}>
         <label
           htmlFor="amount"
           className="text-sm font-medium text-zinc-700 dark:text-zinc-300"

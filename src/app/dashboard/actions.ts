@@ -36,7 +36,7 @@ export async function updateName(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export async function insertTransaction(formData: FormData) {
+export async function addTransaction(formData: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -58,5 +58,11 @@ export async function insertTransaction(formData: FormData) {
     return;
   }
 
+  revalidatePath("/dashboard");
+}
+
+export async function deleteTransaction(id: string) {
+  const supabase = await createClient();
+  await supabase.from("transactions").delete().eq("id", id);
   revalidatePath("/dashboard");
 }
