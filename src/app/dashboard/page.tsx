@@ -26,6 +26,13 @@ export default async function Dashboard() {
     return <p>Could not fetch transactions</p>;
   }
 
+  const { data: categories_list, error: categories_error } = await supabase
+    .from("categories")
+    .select("*");
+  if (categories_error || !categories_list) {
+    return <p>Could not fetch categories</p>;
+  }
+
   console.log("List of transactions: ", transactions_list);
 
   return (
@@ -33,6 +40,7 @@ export default async function Dashboard() {
       email={user.email!}
       display_name={user_profile.display_name}
       transactions_list={transactions_list}
+      categories_list={categories_list}
     />
   );
 }
