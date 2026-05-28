@@ -51,6 +51,7 @@ export async function addTransaction(formData: FormData) {
     amount: Math.round(amountDollars * 100),
     description: formData.get("description") as string,
     category_id: formData.get("category") as string,
+    receipt_path: formData.get("path") as string,
   });
 
   if (error) {

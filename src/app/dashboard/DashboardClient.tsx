@@ -1,10 +1,13 @@
 "use client";
+
+import { useState } from "react";
 import {
   signOut,
   updateName,
   addTransaction,
   deleteTransaction,
 } from "./actions";
+import { uploadReceipt } from "./client-actions";
 
 interface Transaction {
   id: string;
@@ -35,6 +38,13 @@ export default function DashboardClient({
   transactions_list,
   categories_list,
 }: DashboardClientProps) {
+  const [pathName, setPathName] = useState("");
+  const handleFileChange = async (file: File) => {
+    const newPathName = await uploadReceipt(file);
+    if (newPathName) {
+      setPathName(newPathName);
+    }
+  };
   return (
     <>
       <p>{email} is logged in!</p>
@@ -143,6 +153,29 @@ export default function DashboardClient({
               </option>
             ))}
         </select>
+        <label
+          htmlFor="receipt"
+          className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        >
+          Add receipt:{" "}
+        </label>
+        <input
+          id="receipt"
+          type="file"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleFileChange(file);
+          }}
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:focus:border-zinc-100 dark:focus:ring-zinc-100/10"
+        />
+        <input
+          id="path"
+          readOnly
+          name="path"
+          value={pathName}
+          className="hidden"
+        />
+
         <button
           type="submit"
           className="mt-2 inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:ring-offset-white active:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:focus:ring-zinc-100 dark:focus:ring-offset-zinc-900 cursor-pointer"
