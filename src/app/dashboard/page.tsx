@@ -26,6 +26,16 @@ export default async function Dashboard() {
     return <p>Could not fetch transactions</p>;
   }
 
+  const transactions_with_urls = await Promise.all(
+    transactions_list.map(async (t) => {
+      if (!t.receipt_path) return { ...t, receiptUrl: null };
+      const { data } = await supabase.storage
+        .from("receipts")
+        .createSignedUrl(t.receipt_path, 3600);
+      return { ...t, receiptUrl: data?.signedUrl ?? null };
+    }),
+  );
+
   const { data: categories_list, error: categories_error } = await supabase
     .from("categories")
     .select("*");
@@ -39,7 +49,7 @@ export default async function Dashboard() {
     <DashboardClient
       email={user.email!}
       display_name={user_profile.display_name}
-      transactions_list={transactions_list}
+      transactions_list={transactions_with_urls}
       categories_list={categories_list}
     />
   );

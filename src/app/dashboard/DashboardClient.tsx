@@ -17,6 +17,7 @@ interface Transaction {
   description: string;
   category: string;
   date: string;
+  receiptUrl: string | null;
 }
 
 interface Category {
@@ -45,6 +46,7 @@ export default function DashboardClient({
       setPathName(newPathName);
     }
   };
+
   return (
     <>
       <p>{email} is logged in!</p>
@@ -55,7 +57,7 @@ export default function DashboardClient({
           <ul>
             {transactions_list.map((transaction) => (
               <div key={transaction.id}>
-                <li>
+                <li className="inline-block">
                   {
                     categories_list.find(
                       (category) => category.id === transaction.category_id,
@@ -64,6 +66,20 @@ export default function DashboardClient({
                   {transaction.category}: {"$" + transaction.amount / 100},{" "}
                   {transaction.date}
                 </li>
+                {transaction.receiptUrl && (
+                  <a
+                    href={transaction.receiptUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={transaction.receiptUrl}
+                      alt="Image failed to load"
+                      className="h-16 w-16 inline-block"
+                    />
+                  </a>
+                )}
+                <br />
                 <button
                   onClick={() => deleteTransaction(transaction.id)}
                   className="mt-2 inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:ring-offset-white active:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:focus:ring-zinc-100 dark:focus:ring-offset-zinc-900 cursor-pointer"
