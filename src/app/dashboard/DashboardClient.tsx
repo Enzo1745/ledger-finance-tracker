@@ -1,13 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import {
-  signOut,
-  updateName,
-  addTransaction,
-  deleteTransaction,
-} from "./actions";
+import { signOut, updateName, addTransaction } from "./actions";
 import { uploadReceipt } from "./client-actions";
+import { TransactionList } from "./TransactionList";
 
 interface Transaction {
   id: string;
@@ -51,46 +47,12 @@ export default function DashboardClient({
     <>
       <p>{email} is logged in!</p>
       {display_name && <p>Name: {display_name}</p>}
-      {transactions_list && (
-        <div>
-          <p>List of transactions:</p>
-          <ul>
-            {transactions_list.map((transaction) => (
-              <div key={transaction.id}>
-                <li className="inline-block">
-                  {
-                    categories_list.find(
-                      (category) => category.id === transaction.category_id,
-                    )?.icon
-                  }{" "}
-                  {transaction.category}: {"$" + transaction.amount / 100},{" "}
-                  {transaction.date}
-                </li>
-                {transaction.receiptUrl && (
-                  <a
-                    href={transaction.receiptUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src={transaction.receiptUrl}
-                      alt="Image failed to load"
-                      className="h-16 w-16 inline-block"
-                    />
-                  </a>
-                )}
-                <br />
-                <button
-                  onClick={() => deleteTransaction(transaction.id)}
-                  className="mt-2 inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:ring-offset-white active:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:focus:ring-zinc-100 dark:focus:ring-offset-zinc-900 cursor-pointer"
-                >
-                  Delete
-                </button>
-              </div>
-            ))}
-          </ul>
-        </div>
-      )}
+
+      <TransactionList
+        transactions_list={transactions_list}
+        categories_list={categories_list}
+      />
+
       <button onClick={() => signOut()} className="hover:cursor-pointer">
         Sign out
       </button>
