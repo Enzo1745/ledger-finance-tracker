@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { deleteTransaction } from "./actions";
 
@@ -47,12 +47,43 @@ export function TransactionList({
           setTransactions((prev) => [payload.new as Transaction, ...prev]);
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "transactions" },
+        (payload) => {
+          setTransactions((prev) =>
+            prev.map((t) =>
+              t.id === payload.new.id ? (payload.new as Transaction) : t,
+            ),
+          );
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "transactions" },
+        (payload) => {
+          setTransactions((prev) =>
+            prev.filter((t) => t.id !== payload.old.id),
+          );
+        },
+      )
       .subscribe((status) => console.log("channel status:", status));
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const balance = useMemo(
+    () => transactions.reduce((sum, t) => sum + t.amount, 0),
+    [transactions],
+  );
+
+  // Display: divide by 100 for euros
+  const formatted = new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+  }).format(balance / 100);
 
   return (
     <>
@@ -68,7 +99,7 @@ export function TransactionList({
                       (category) => category.id === transaction.category_id,
                     )?.icon
                   }{" "}
-                  {transaction.category}: {"$" + transaction.amount / 100},{" "}
+                  {transaction.category}: {"€" + transaction.amount / 100},{" "}
                   {transaction.date}
                 </li>
                 {transaction.receiptUrl && (
@@ -94,6 +125,7 @@ export function TransactionList({
               </div>
             ))}
           </ul>
+          <p>Balance: {formatted}</p>
         </div>
       )}
     </>
