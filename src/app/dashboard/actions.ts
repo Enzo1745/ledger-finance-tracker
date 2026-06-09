@@ -64,6 +64,20 @@ export async function addTransaction(formData: FormData) {
 
 export async function deleteTransaction(id: string) {
   const supabase = await createClient();
+
+  // Fetch the path before deleting the row
+  const { data: tx } = await supabase
+    .from("transactions")
+    .select("receipt_path")
+    .eq("id", id)
+    .single();
+
   await supabase.from("transactions").delete().eq("id", id);
+
+  // Clean up receipt file
+  if (tx?.receipt_path) {
+    await supabase.storage.from("receipts").remove([tx.receipt_path]);
+  }
+
   revalidatePath("/dashboard");
 }

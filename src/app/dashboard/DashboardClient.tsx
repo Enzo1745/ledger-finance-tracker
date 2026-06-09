@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signOut, updateName, addTransaction } from "./actions";
 import { uploadReceipt } from "./client-actions";
 import { TransactionList } from "./TransactionList";
+import { text } from "stream/consumers";
 
 interface Transaction {
   id: string;
@@ -36,11 +37,14 @@ export default function DashboardClient({
   categories_list,
 }: DashboardClientProps) {
   const [pathName, setPathName] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const handleFileChange = async (file: File) => {
+    setIsUploading(true);
     const newPathName = await uploadReceipt(file);
     if (newPathName) {
       setPathName(newPathName);
     }
+    setIsUploading(false);
   };
 
   return (
@@ -146,6 +150,11 @@ export default function DashboardClient({
           }}
           className="rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:focus:border-zinc-100 dark:focus:ring-zinc-100/10"
         />
+        {isUploading && (
+          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+            Uploading…
+          </span>
+        )}
         <input
           id="path"
           readOnly
@@ -155,6 +164,7 @@ export default function DashboardClient({
         />
 
         <button
+          disabled={isUploading}
           type="submit"
           className="mt-2 inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:ring-offset-white active:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:focus:ring-zinc-100 dark:focus:ring-offset-zinc-900 cursor-pointer"
         >
