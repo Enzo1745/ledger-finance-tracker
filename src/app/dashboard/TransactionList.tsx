@@ -64,54 +64,90 @@ export function TransactionList({
   );
 
   // Display: divide by 100 for euros
-  const formatted = new Intl.NumberFormat("fr-FR", {
+  const euros = new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "EUR",
-  }).format(balance / 100);
+  });
+  const formatted = euros.format(balance / 100);
 
   return (
-    <>
-      {transactions && (
-        <div>
-          <p>List of transactions:</p>
-          <ul>
-            {transactions.map((transaction) => (
-              <div key={transaction.id}>
-                <li className="inline-block">
-                  {
-                    categories_list.find(
-                      (category) => category.id === transaction.category_id,
-                    )?.icon
-                  }{" "}
-                  {transaction.category}: {"€" + transaction.amount / 100},{" "}
-                  {transaction.date}
-                </li>
-                {transaction.receiptUrl && (
-                  <a
-                    href={transaction.receiptUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <img
-                      src={transaction.receiptUrl}
-                      alt="Image failed to load"
-                      className="h-16 w-16 inline-block"
-                    />
-                  </a>
-                )}
-                <br />
-                <button
-                  onClick={() => deleteTransaction(transaction.id)}
-                  className="mt-2 inline-flex items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:ring-offset-white active:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:focus:ring-zinc-100 dark:focus:ring-offset-zinc-900 cursor-pointer"
+    <div className="flex flex-col gap-6">
+      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+          Balance
+        </p>
+        <p className="mt-1 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          {formatted}
+        </p>
+      </section>
+
+      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          Transactions
+        </h2>
+
+        {transactions.length === 0 ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            No transactions yet.
+          </p>
+        ) : (
+          <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            {transactions.map((transaction) => {
+              const icon = categories_list.find(
+                (category) => category.id === transaction.category_id,
+              )?.icon;
+
+              return (
+                <li
+                  key={transaction.id}
+                  className="flex items-center justify-between gap-4 py-4"
                 >
-                  Delete
-                </button>
-              </div>
-            ))}
+                  <div className="flex min-w-0 items-center gap-3">
+                    {transaction.receiptUrl ? (
+                      <a
+                        href={transaction.receiptUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0"
+                      >
+                        <img
+                          src={transaction.receiptUrl}
+                          alt="Receipt"
+                          className="h-10 w-10 rounded-lg object-cover"
+                        />
+                      </a>
+                    ) : (
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-lg dark:bg-zinc-800">
+                        {icon}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                        {transaction.category}
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {transaction.date}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+                      {euros.format(transaction.amount / 100)}
+                    </span>
+                    <button
+                      onClick={() => deleteTransaction(transaction.id)}
+                      className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500/30 dark:text-red-400 dark:hover:bg-red-950/40 cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
-          <p>Balance: {formatted}</p>
-        </div>
-      )}
-    </>
+        )}
+      </section>
+    </div>
   );
 }
