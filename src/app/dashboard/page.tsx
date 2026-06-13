@@ -6,7 +6,6 @@ export default async function Dashboard() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return <p>No user logged in</p>;
 
   const { data: user_profile, error } = await supabase
     .from("profiles")
