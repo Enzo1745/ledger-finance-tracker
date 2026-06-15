@@ -27,6 +27,16 @@ export async function middleware(request: NextRequest) {
   ) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
+
+  // Send user data to avoid repetitive code
+  if (user) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-user-id", user.id);
+    requestHeaders.set("x-user-email", user.email ?? "");
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+  }
 }
 
 export const config = {

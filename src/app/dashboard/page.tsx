@@ -1,16 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
+import { headers } from "next/headers";
 
 export default async function Dashboard() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+
+  const headersList = await headers();
+  const userId = headersList.get("x-user-id");
+  const userEmail = headersList.get("x-user-email");
 
   const { data: user_profile, error } = await supabase
     .from("profiles")
     .select("display_name")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   if (error || !user_profile) {
@@ -46,7 +48,7 @@ export default async function Dashboard() {
 
   return (
     <DashboardClient
-      email={user.email!}
+      email={userEmail!}
       display_name={user_profile.display_name}
       transactions_list={transactions_with_urls}
       categories_list={categories_list}
