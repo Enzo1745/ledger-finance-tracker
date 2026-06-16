@@ -1,6 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "./lib/supabase/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "60 s"),
+});
+
+const AUTH_ROUTES = ["/login", "/signup"];
 const PUBLIC_ROUTES = ["/login", "/signup", "/auth/confirm", "/auth/github"];
 
 export async function middleware(request: NextRequest) {
@@ -8,9 +16,23 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
   const isPublic = PUBLIC_ROUTES.some((r) =>
     request.nextUrl.pathname.startsWith(r),
   );
+  const isAuthRoute = AUTH_ROUTES.some((r) =>
+    request.nextUrl.pathname.startsWith(r),
+  );
+
+  // Prevent brute force attacks on login and signup
+  if (isAuthRoute) {
+    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+
+    const { success } = await ratelimit.limit(ip);
+    if (!success) {
+      return new NextResponse("Too many requests", { status: 429 });
+    }
+  }
 
   // Logged-out user hitting a protected route
   if (!user && !isPublic) {
@@ -20,11 +42,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
   // Logged-in user hitting login or signup
-  if (
-    user &&
-    (request.nextUrl.pathname === "/login" ||
-      request.nextUrl.pathname === "/signup")
-  ) {
+  if (user && isAuthRoute) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
