@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useActionState } from "react";
 import { addTransaction } from "./actions";
 import { uploadReceipt } from "./client-actions";
 import type { Category } from "./types";
@@ -9,9 +9,14 @@ interface AddTransactionFormProps {
   categories_list: Category[];
 }
 
-export function AddTransactionForm({ categories_list }: AddTransactionFormProps) {
+export function AddTransactionForm({
+  categories_list,
+}: AddTransactionFormProps) {
   const [pathName, setPathName] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [state, formAction, isPending] = useActionState(addTransaction, {
+    error: null,
+  });
 
   const handleFileChange = async (file: File) => {
     setIsUploading(true);
@@ -28,7 +33,7 @@ export function AddTransactionForm({ categories_list }: AddTransactionFormProps)
         Add transaction
       </h2>
 
-      <form action={addTransaction} className="flex flex-col gap-5">
+      <form action={formAction} className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
           <label
             htmlFor="amount"
@@ -110,14 +115,22 @@ export function AddTransactionForm({ categories_list }: AddTransactionFormProps)
           )}
         </div>
 
-        <input id="path" readOnly name="path" value={pathName} className="hidden" />
+        <input
+          id="path"
+          readOnly
+          name="path"
+          value={pathName}
+          className="hidden"
+        />
+
+        {state && state.error && <p style={{ color: "red" }}>{state.error}</p>}
 
         <button
-          disabled={isUploading}
+          disabled={isUploading || isPending}
           type="submit"
           className="inline-flex w-full items-center justify-center rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:ring-offset-2 focus:ring-offset-white active:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 dark:focus:ring-zinc-100 dark:focus:ring-offset-zinc-900 cursor-pointer"
         >
-          Insert transaction
+          {isPending ? "Inserting transaction..." : "Insert transaction"}
         </button>
       </form>
     </section>

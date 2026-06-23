@@ -36,7 +36,10 @@ export async function updateName(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export async function addTransaction(formData: FormData) {
+export async function addTransaction(
+  prevState: { error: string | null },
+  formData: FormData,
+) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -60,6 +63,7 @@ export async function addTransaction(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
+  return { error: null };
 }
 
 export async function deleteTransaction(id: string) {
