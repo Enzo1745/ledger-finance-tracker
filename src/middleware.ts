@@ -1,13 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "./lib/supabase/server";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "60 s"),
-});
+// Rate limiting (Upstash) is disabled: not needed for a private single-user app.
+// import { Ratelimit } from "@upstash/ratelimit";
+// import { Redis } from "@upstash/redis";
+//
+// const ratelimit = new Ratelimit({
+//   redis: Redis.fromEnv(),
+//   limiter: Ratelimit.slidingWindow(10, "60 s"),
+// });
 
 const AUTH_ROUTES = ["/login", "/signup"];
 const PUBLIC_ROUTES = ["/login", "/signup", "/auth/confirm", "/auth/github"];
@@ -15,20 +17,20 @@ const PUBLIC_ROUTES = ["/login", "/signup", "/auth/confirm", "/auth/github"];
 const startsWithAny = (pathname: string, routes: string[]) =>
   routes.some((r) => pathname.startsWith(r));
 
-// Throttle auth routes to prevent brute force. Returns a 429 response when the
+// [Disabled] Throttle auth routes to prevent brute force. Returns a 429 response when the
 // caller should stop, or null to let the request continue.
-async function handleRateLimit(
-  request: NextRequest,
-): Promise<NextResponse | null> {
-  if (!startsWithAny(request.nextUrl.pathname, AUTH_ROUTES)) return null;
-
-  const ip = request.headers.get("x-forwarded-for") ?? "unknown";
-  const { success } = await ratelimit.limit(ip);
-  if (!success) {
-    return new NextResponse("Too many requests", { status: 429 });
-  }
-  return null;
-}
+// async function handleRateLimit(
+//   request: NextRequest,
+// ): Promise<NextResponse | null> {
+//   if (!startsWithAny(request.nextUrl.pathname, AUTH_ROUTES)) return null;
+//
+//   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+//   const { success } = await ratelimit.limit(ip);
+//   if (!success) {
+//     return new NextResponse("Too many requests", { status: 429 });
+//   }
+//   return null;
+// }
 
 // Resolve the user and decide where the request goes. When a redirect is
 // needed, `user` is null so the caller skips header injection and just returns
@@ -75,8 +77,9 @@ function injectUserHeaders(request: NextRequest, user: User): NextResponse {
 export async function middleware(request: NextRequest) {
   const start = Date.now();
 
-  const rateLimitRes = await handleRateLimit(request);
-  if (rateLimitRes) return rateLimitRes;
+  // [Disabled] Rate limiting — see note at top of file.
+  // const rateLimitRes = await handleRateLimit(request);
+  // if (rateLimitRes) return rateLimitRes;
 
   const { response: authResponse, user } = await handleAuth(request);
   const response = user ? injectUserHeaders(request, user) : authResponse;
