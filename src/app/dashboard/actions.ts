@@ -2,6 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { transactionSchema } from "@/lib/schemas";
 
 export async function signOut() {
   const supabase = await createClient();
@@ -44,22 +45,29 @@ export async function addTransaction(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) return { error: "Not authenticated" };
 
-  const amountDollars = parseInt(formData.get("amount") as string);
-  if (Number.isNaN(amountDollars)) return;
+  const result = transactionSchema.safeParse({
+    amount: formData.get("amount"),
+    description: formData.get("description"),
+    category_id: formData.get("category"),
+    receipt_path: formData.get("path"),
+  });
+  if (!result.success) {
+    return { error: result.error.issues[0].message };
+  }
+  const { amount, description, category_id, receipt_path } = result.data;
 
   const { error } = await supabase.from("transactions").insert({
     user_id: user.id,
-    amount: Math.round(amountDollars * 100),
-    description: formData.get("description") as string,
-    category_id: formData.get("category") as string,
-    receipt_path: formData.get("path") as string,
+    amount: Math.round(amount * 100),
+    description: description,
+    category_id: category_id,
+    receipt_path: receipt_path,
   });
 
   if (error) {
-    console.error("Failed to insert transaction:", error);
-    return;
+    return { error: error.message };
   }
 
   revalidatePath("/dashboard");
