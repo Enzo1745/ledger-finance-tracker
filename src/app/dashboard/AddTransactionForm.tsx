@@ -3,20 +3,44 @@
 import { useState, useActionState } from "react";
 import { addTransaction } from "./actions";
 import { uploadReceipt } from "./client-actions";
-import type { Category } from "./types";
+import type { Category, Transaction } from "./types";
 
 interface AddTransactionFormProps {
   categories_list: Category[];
+  addOptimistic: (tx: Transaction) => void;
 }
 
 export function AddTransactionForm({
   categories_list,
+  addOptimistic,
 }: AddTransactionFormProps) {
   const [pathName, setPathName] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-  const [state, formAction, isPending] = useActionState(addTransaction, {
-    error: null,
-  });
+  const [state, formAction, isPending] = useActionState(
+    async (prevState: { error: string | null }, formData: FormData) => {
+      const amount = parseFloat(formData.get("amount") as string);
+      const category_id = formData.get("category") as string;
+
+      // Skip the optimistic row if the amount isn't even a number
+      if (Number.isFinite(amount)) {
+        addOptimistic({
+          id: crypto.randomUUID(),
+          user_id: "",
+          category_id,
+          category:
+            categories_list.find((c) => c.id === category_id)?.name ?? "",
+          amount: Math.round(amount * 100),
+          description: formData.get("description") as string,
+          date: new Date().toISOString().slice(0, 10),
+          receiptUrl: null,
+          pending: true,
+        });
+      }
+
+      return addTransaction(prevState, formData);
+    },
+    { error: null },
+  );
 
   const handleFileChange = async (file: File) => {
     setIsUploading(true);

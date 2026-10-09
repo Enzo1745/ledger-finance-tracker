@@ -1,63 +1,17 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useMemo } from "react";
 import { deleteTransaction } from "./actions";
 import type { Transaction, Category } from "./types";
 
-interface DashboardClientProps {
-  transactions_list: Transaction[];
+interface TransactionListProps {
+  transactions: Transaction[];
   categories_list: Category[];
 }
 
 export function TransactionList({
-  transactions_list,
+  transactions,
   categories_list,
-}: DashboardClientProps) {
-  const [transactions, setTransactions] = useState(transactions_list);
-  const supabase = createClient();
-
-  useEffect(() => {
-    setTransactions(transactions_list);
-  }, [transactions_list]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("transactions")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "transactions" },
-        (payload) => {
-          console.log("realtime payload:", payload.new);
-          setTransactions((prev) => [payload.new as Transaction, ...prev]);
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "transactions" },
-        (payload) => {
-          setTransactions((prev) =>
-            prev.map((t) =>
-              t.id === payload.new.id ? (payload.new as Transaction) : t,
-            ),
-          );
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "transactions" },
-        (payload) => {
-          setTransactions((prev) =>
-            prev.filter((t) => t.id !== payload.old.id),
-          );
-        },
-      )
-      .subscribe((status) => console.log("channel status:", status));
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
+}: TransactionListProps) {
   const balance = useMemo(
     () => transactions.reduce((sum, t) => sum + t.amount, 0),
     [transactions],
@@ -100,7 +54,7 @@ export function TransactionList({
               return (
                 <li
                   key={transaction.id}
-                  className="flex items-center justify-between gap-4 py-4"
+                  className={`flex items-center justify-between gap-4 py-4 ${transaction.pending ? "opacity-50" : ""}`}
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     {transaction.receiptUrl ? (
@@ -136,6 +90,7 @@ export function TransactionList({
                       {euros.format(transaction.amount / 100)}
                     </span>
                     <button
+                      disabled={transaction.pending}
                       onClick={() => deleteTransaction(transaction.id)}
                       className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500/30 dark:text-red-400 dark:hover:bg-red-950/40 cursor-pointer"
                     >

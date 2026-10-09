@@ -1,9 +1,11 @@
 "use client";
 
+import { useOptimistic } from "react";
 import { signOut } from "./actions";
 import { TransactionList } from "./TransactionList";
 import { AddTransactionForm } from "./AddTransactionForm";
 import { ChangeNameForm } from "./ChangeNameForm";
+import { useRealtimeTransactions } from "./useRealtimeTransactions";
 import type { Transaction, Category } from "./types";
 
 interface DashboardClientProps {
@@ -19,6 +21,12 @@ export default function DashboardClient({
   transactions_list,
   categories_list,
 }: DashboardClientProps) {
+  const transactions = useRealtimeTransactions(transactions_list);
+  const [optimisticTransactions, addOptimistic] = useOptimistic(
+    transactions,
+    (state, newTx: Transaction) => [newTx, ...state],
+  );
+
   return (
     <div className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -41,12 +49,15 @@ export default function DashboardClient({
         </header>
 
         <TransactionList
-          transactions_list={transactions_list}
+          transactions={optimisticTransactions}
           categories_list={categories_list}
         />
 
         <div className="grid gap-6 md:grid-cols-2">
-          <AddTransactionForm categories_list={categories_list} />
+          <AddTransactionForm
+            categories_list={categories_list}
+            addOptimistic={addOptimistic}
+          />
           <ChangeNameForm />
         </div>
       </main>

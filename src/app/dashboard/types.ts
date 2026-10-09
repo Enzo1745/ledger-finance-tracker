@@ -7,6 +7,7 @@ export interface Transaction {
   category: string;
   date: string;
   receiptUrl: string | null;
+  pending?: boolean;
 }
 
 export interface Category {
