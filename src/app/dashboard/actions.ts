@@ -41,12 +41,6 @@ export async function addTransaction(
   prevState: { error: string | null },
   formData: FormData,
 ) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
-
   const result = transactionSchema.safeParse({
     amount: formData.get("amount"),
     description: formData.get("description"),
@@ -58,16 +52,26 @@ export async function addTransaction(
   }
   const { amount, description, category_id, receipt_path } = result.data;
 
-  const { error } = await supabase.from("transactions").insert({
-    user_id: user.id,
-    amount: Math.round(amount * 100),
-    description: description,
-    category_id: category_id,
-    receipt_path: receipt_path,
-  });
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
 
-  if (error) {
-    return { error: error.message };
+    const { error } = await supabase.from("transactions").insert({
+      user_id: user.id,
+      amount: Math.round(amount * 100),
+      description: description,
+      category_id: category_id,
+      receipt_path: receipt_path,
+    });
+    if (error) {
+      throw error;
+    }
+  } catch (err) {
+    console.error("addTransaction failed:", err);
+    return { error: "Something went wrong. Please try again." };
   }
 
   revalidatePath("/dashboard");
