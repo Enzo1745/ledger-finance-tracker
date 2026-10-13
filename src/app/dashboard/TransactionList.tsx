@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { deleteTransaction } from "./actions";
+import { deleteTransaction, duplicateTransaction } from "./actions";
 import type { Transaction, Category } from "./types";
 
 interface TransactionListProps {
@@ -95,6 +95,13 @@ export function TransactionList({
                       className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500/30 dark:text-red-400 dark:hover:bg-red-950/40 cursor-pointer"
                     >
                       Delete
+                    </button>
+                    <button
+                      disabled={transaction.pending}
+                      onClick={() => duplicateTransaction(transaction.id)}
+                      className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-blue-300 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:text-blue-300 dark:hover:bg-blue-950/40 cursor-pointer"
+                    >
+                      Duplicate
                     </button>
                   </div>
                 </li>

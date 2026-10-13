@@ -97,3 +97,29 @@ export async function deleteTransaction(id: string) {
 
   revalidatePath("/dashboard");
 }
+
+export async function duplicateTransaction(id: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: original } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (!original) return { error: "Transaction not found" };
+
+  const { error } = await supabase.from("transactions").insert({
+    user_id: user.id,
+    amount: original.amount,
+    description: original.description,
+    category_id: original.category_id,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard");
+  return { error: null };
+}
