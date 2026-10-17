@@ -12,6 +12,7 @@ interface DashboardClientProps {
   email: string;
   display_name: string | undefined;
   transactions_list: Transaction[];
+  balance: number;
   categories_list: Category[];
 }
 
@@ -19,6 +20,7 @@ export default function DashboardClient({
   email,
   display_name,
   transactions_list,
+  balance,
   categories_list,
 }: DashboardClientProps) {
   const transactions = useRealtimeTransactions(transactions_list);
@@ -50,6 +52,7 @@ export default function DashboardClient({
 
         <TransactionList
           transactions={optimisticTransactions}
+          balance={balance}
           categories_list={categories_list}
         />
 

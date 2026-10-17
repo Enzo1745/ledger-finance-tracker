@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
 import { headers } from "next/headers";
+import { getCategories } from "@/lib/data/categories";
+import { getMonthlySummary } from "@/lib/data/summary";
 
 export default async function Dashboard() {
   const supabase = await createClient();
@@ -20,15 +22,16 @@ export default async function Dashboard() {
     return <p>Could not load your profile.</p>;
   }
 
-  const { data: transactions_list, error: transactions_error } = await supabase
-    .from("transactions")
-    .select("*");
-  if (transactions_error || !transactions_list) {
+  let summary;
+  try {
+    summary = await getMonthlySummary(supabase, userId!);
+  } catch {
     return <p>Could not fetch transactions</p>;
   }
 
+  // Signed URLs expire, so they're generated per request, outside the cache.
   const transactions_with_urls = await Promise.all(
-    transactions_list.map(async (t) => {
+    summary.transactions.map(async (t) => {
       if (!t.receipt_path) return { ...t, receiptUrl: null };
       const { data } = await supabase.storage
         .from("receipts")
@@ -37,20 +40,19 @@ export default async function Dashboard() {
     }),
   );
 
-  const { data: categories_list, error: categories_error } = await supabase
-    .from("categories")
-    .select("*");
-  if (categories_error || !categories_list) {
+  let categories_list;
+  try {
+    categories_list = await getCategories();
+  } catch {
     return <p>Could not fetch categories</p>;
   }
-
-  console.log("List of transactions: ", transactions_list);
 
   return (
     <DashboardClient
       email={userEmail!}
       display_name={user_profile.display_name}
       transactions_list={transactions_with_urls}
+      balance={summary.total}
       categories_list={categories_list}
     />
   );

@@ -1,22 +1,18 @@
 "use client";
-import { useMemo } from "react";
 import { deleteTransaction, duplicateTransaction } from "./actions";
 import type { Transaction, Category } from "./types";
 
 interface TransactionListProps {
   transactions: Transaction[];
+  balance: number;
   categories_list: Category[];
 }
 
 export function TransactionList({
   transactions,
+  balance,
   categories_list,
 }: TransactionListProps) {
-  const balance = useMemo(
-    () => transactions.reduce((sum, t) => sum + t.amount, 0),
-    [transactions],
-  );
-
   // Display: divide by 100 for euros
   const euros = new Intl.NumberFormat("fr-FR", {
     style: "currency",
