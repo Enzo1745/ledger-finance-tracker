@@ -1,7 +1,7 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { transactionSchema } from "@/lib/schemas";
 
 export async function signOut() {
@@ -69,12 +69,12 @@ export async function addTransaction(
     if (error) {
       throw error;
     }
+    updateTag(`summary-${user!.id}`);
   } catch (err) {
     console.error("addTransaction failed:", err);
     return { error: "Something went wrong. Please try again." };
   }
 
-  revalidatePath("/dashboard");
   return { error: null };
 }
 
@@ -90,12 +90,16 @@ export async function deleteTransaction(id: string) {
 
   await supabase.from("transactions").delete().eq("id", id);
 
+  // Revalidate cached data
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  updateTag(`summary-${user!.id}`);
+
   // Clean up receipt file
   if (tx?.receipt_path) {
     await supabase.storage.from("receipts").remove([tx.receipt_path]);
   }
-
-  revalidatePath("/dashboard");
 }
 
 export async function duplicateTransaction(id: string) {
@@ -120,6 +124,6 @@ export async function duplicateTransaction(id: string) {
   });
   if (error) return { error: error.message };
 
-  revalidatePath("/dashboard");
+  updateTag(`summary-${user!.id}`);
   return { error: null };
 }
