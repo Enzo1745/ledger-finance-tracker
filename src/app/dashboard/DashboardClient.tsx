@@ -7,6 +7,7 @@ import { AddTransactionForm } from "./AddTransactionForm";
 import { ChangeNameForm } from "./ChangeNameForm";
 import { useRealtimeTransactions } from "./useRealtimeTransactions";
 import type { Transaction, Category } from "./types";
+import Link from "next/link";
 
 interface DashboardClientProps {
   email: string;
@@ -63,6 +64,7 @@ export default function DashboardClient({
           />
           <ChangeNameForm />
         </div>
+        <Link href="/dashboard">Dashboard</Link>
       </main>
     </div>
   );
