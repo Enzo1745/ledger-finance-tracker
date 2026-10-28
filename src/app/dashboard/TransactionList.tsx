@@ -4,13 +4,11 @@ import type { Transaction, Category } from "./types";
 
 interface TransactionListProps {
   transactions: Transaction[];
-  balance: number;
   categories_list: Category[];
 }
 
 export function TransactionList({
   transactions,
-  balance,
   categories_list,
 }: TransactionListProps) {
   // Display: divide by 100 for euros
@@ -18,19 +16,9 @@ export function TransactionList({
     style: "currency",
     currency: "EUR",
   });
-  const formatted = euros.format(balance / 100);
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-          Balance
-        </p>
-        <p className="mt-1 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          {formatted}
-        </p>
-      </section>
-
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           Transactions

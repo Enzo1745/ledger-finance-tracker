@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import DashboardClient from "./DashboardClient";
-import { headers } from "next/headers";
 import { getCategories } from "@/lib/data/categories";
 import { getMonthlySummary } from "@/lib/data/summary";
+import DashboardClient from "./DashboardClient";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 

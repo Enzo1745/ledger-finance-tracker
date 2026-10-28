@@ -1,13 +1,15 @@
 "use client";
 
-import { useOptimistic } from "react";
 import { signOut } from "./actions";
 import { TransactionList } from "./TransactionList";
+import Summary from "./Summary";
 import { AddTransactionForm } from "./AddTransactionForm";
 import { ChangeNameForm } from "./ChangeNameForm";
 import { useRealtimeTransactions } from "./useRealtimeTransactions";
 import type { Transaction, Category } from "./types";
 import Link from "next/link";
+import { useOptimistic } from "react";
+import { Suspense } from "react";
 
 interface DashboardClientProps {
   email: string;
@@ -15,6 +17,37 @@ interface DashboardClientProps {
   transactions_list: Transaction[];
   balance: number;
   categories_list: Category[];
+}
+
+function SummarySkeleton() {
+  return (
+    <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+        Balance
+      </p>
+      <p className="mt-1 text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+        Loading total balalnce...
+      </p>
+    </section>
+  );
+}
+
+function TransactionsSkeleton() {
+  return (
+    <>
+      {[...Array(5)].map((_, i) => (
+        <div
+          key={i}
+          style={{
+            height: 48,
+            background: "var(--color-background-secondary)",
+            borderRadius: 8,
+            marginBottom: 8,
+          }}
+        />
+      ))}
+    </>
+  );
 }
 
 export default function DashboardClient({
@@ -51,11 +84,18 @@ export default function DashboardClient({
           </button>
         </header>
 
-        <TransactionList
-          transactions={optimisticTransactions}
-          balance={balance}
-          categories_list={categories_list}
-        />
+        {/* Summary is cached — fast */}
+        <Suspense fallback={<SummarySkeleton />}>
+          <Summary balance={balance} />
+        </Suspense>
+
+        {/* Transaction list — always fresh, may be slower */}
+        <Suspense fallback={<TransactionsSkeleton />}>
+          <TransactionList
+            transactions={optimisticTransactions}
+            categories_list={categories_list}
+          />
+        </Suspense>
 
         <div className="grid gap-6 md:grid-cols-2">
           <AddTransactionForm
