@@ -3,7 +3,9 @@
 import { useState, useActionState } from "react";
 import { addTransaction } from "./actions";
 import { uploadReceipt } from "./client-actions";
-import type { Category, Transaction } from "./types";
+import { initialState } from "./types";
+import type { Category, Transaction, ActionState } from "./types";
+import { FieldError } from "./FieldError";
 
 interface AddTransactionFormProps {
   categories_list: Category[];
@@ -17,7 +19,7 @@ export function AddTransactionForm({
   const [pathName, setPathName] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [state, formAction, isPending] = useActionState(
-    async (prevState: { error: string | null }, formData: FormData) => {
+    async (prevState: ActionState, formData: FormData) => {
       const amount = parseFloat(formData.get("amount") as string);
       const category_id = formData.get("category") as string;
 
@@ -39,7 +41,7 @@ export function AddTransactionForm({
 
       return addTransaction(prevState, formData);
     },
-    { error: null },
+    initialState,
   );
 
   const handleFileChange = async (file: File) => {
@@ -74,6 +76,7 @@ export function AddTransactionForm({
             placeholder="10"
             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:focus:border-zinc-100 dark:focus:ring-zinc-100/10"
           />
+          <FieldError errors={state.errors} field="amount" />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -91,6 +94,7 @@ export function AddTransactionForm({
             placeholder="Lunch at Burger King"
             className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:focus:border-zinc-100 dark:focus:ring-zinc-100/10"
           />
+          <FieldError errors={state.errors} field="description" />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -147,7 +151,9 @@ export function AddTransactionForm({
           className="hidden"
         />
 
-        {state && state.error && <p style={{ color: "red" }}>{state.error}</p>}
+        {!state.success && state.message && (
+          <p style={{ color: "red" }}>{state.message}</p>
+        )}
 
         <button
           disabled={isUploading || isPending}

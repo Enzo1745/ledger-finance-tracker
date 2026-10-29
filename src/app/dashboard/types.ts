@@ -15,3 +15,15 @@ export interface Category {
   name: string;
   icon: string;
 }
+
+export type ActionState = {
+  errors: Partial<Record<string, string[]>>;
+  message: string | null;
+  success: boolean;
+};
+
+export const initialState: ActionState = {
+  errors: {},
+  message: null,
+  success: false,
+};

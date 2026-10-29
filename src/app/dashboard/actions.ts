@@ -2,7 +2,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath, updateTag } from "next/cache";
-import { transactionSchema } from "@/lib/schemas";
+import {
+  addTransactionSchema,
+  updateProfileSchema,
+  uuidSchema,
+} from "@/lib/schemas";
+import { ActionState } from "./types";
 
 export async function signOut() {
   const supabase = await createClient();
@@ -17,6 +22,16 @@ export async function updateName(formData: FormData) {
   } = await supabase.auth.getUser();
   if (!user) return;
 
+  const result = updateProfileSchema.safeParse({
+    display_name: formData.get("name"),
+  });
+  if (!result.success) {
+    console.error("Invalid display name:", result.error.flatten().fieldErrors);
+    return;
+  }
+
+  const { display_name } = result.data;
+
   const { data: user_profile, error } = await supabase
     .from("profiles")
     .select("display_name")
@@ -27,29 +42,29 @@ export async function updateName(formData: FormData) {
     return;
   }
 
-  const name = formData.get("name") as string;
-
-  await supabase
-    .from("profiles")
-    .update({ display_name: name })
-    .eq("id", user.id);
+  await supabase.from("profiles").update({ display_name }).eq("id", user.id);
 
   revalidatePath("/dashboard");
 }
 
 export async function addTransaction(
-  prevState: { error: string | null },
+  prevState: ActionState,
   formData: FormData,
-) {
-  const result = transactionSchema.safeParse({
+): Promise<ActionState> {
+  const result = addTransactionSchema.safeParse({
     amount: formData.get("amount"),
     description: formData.get("description"),
     category_id: formData.get("category"),
     receipt_path: formData.get("path"),
   });
   if (!result.success) {
-    return { error: result.error.issues[0].message };
+    return {
+      errors: result.error.flatten().fieldErrors,
+      message: "Please fix the errors below.",
+      success: false,
+    };
   }
+
   const { amount, description, category_id, receipt_path } = result.data;
 
   try {
@@ -57,7 +72,8 @@ export async function addTransaction(
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user)
+      return { errors: {}, message: "Not authenticated.", success: false };
 
     const { error } = await supabase.from("transactions").insert({
       user_id: user.id,
@@ -72,13 +88,20 @@ export async function addTransaction(
     updateTag(`summary-${user!.id}`);
   } catch (err) {
     console.error("addTransaction failed:", err);
-    return { error: "Something went wrong. Please try again." };
+    return {
+      errors: {},
+      message: "Something went wrong. Please try again.",
+      success: false,
+    };
   }
 
-  return { error: null };
+  return { errors: {}, message: null, success: true };
 }
 
 export async function deleteTransaction(id: string) {
+  // Server actions are public endpoints: the `string` type isn't enforced at runtime
+  if (!uuidSchema.safeParse(id).success) return;
+
   const supabase = await createClient();
 
   // Fetch the path before deleting the row
@@ -103,6 +126,8 @@ export async function deleteTransaction(id: string) {
 }
 
 export async function duplicateTransaction(id: string) {
+  if (!uuidSchema.safeParse(id).success) return { error: "Invalid ID" };
+
   const supabase = await createClient();
   const {
     data: { user },
