@@ -11,6 +11,7 @@ const amountSchema = z.coerce
   .refine((n) => n !== 0, "Amount cannot be zero")
   .refine((n) => Math.abs(n) < 1_000_000, "Amount seems too large");
 
+// ID validation
 export const uuidSchema = z.string().uuid("Invalid ID");
 
 export const addTransactionSchema = z.object({
