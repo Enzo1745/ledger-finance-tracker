@@ -47,3 +47,13 @@ export const signupSchema = loginSchema.extend({
     .regex(/[A-Z]/, "At least one uppercase letter")
     .regex(/[0-9]/, "At least one number"),
 });
+
+export const dateRangeSchema = z
+  .object({
+    from: z.string().date("Invalid start date"),
+    to: z.string().date("Invalid end date"),
+  })
+  .refine((data) => new Date(data.to) >= new Date(data.from), {
+    message: "End date must be after start date",
+    path: ["to"], // attach error to the 'to' field
+  });

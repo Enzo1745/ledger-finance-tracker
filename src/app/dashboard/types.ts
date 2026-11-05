@@ -27,3 +27,13 @@ export const initialState: ActionState = {
   message: null,
   success: false,
 };
+
+export type FilterState = ActionState & {
+  // null = no filter applied, show the default monthly list
+  transactions: Transaction[] | null;
+};
+
+export const initialFilterState: FilterState = {
+  ...initialState,
+  transactions: null,
+};

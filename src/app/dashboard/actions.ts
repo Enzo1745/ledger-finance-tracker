@@ -4,10 +4,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath, updateTag } from "next/cache";
 import {
   addTransactionSchema,
+  dateRangeSchema,
   updateProfileSchema,
   uuidSchema,
 } from "@/lib/schemas";
-import { ActionState } from "./types";
+import { ActionState, FilterState, initialFilterState } from "./types";
 
 export async function signOut() {
   const supabase = await createClient();
@@ -151,4 +152,70 @@ export async function duplicateTransaction(id: string) {
 
   updateTag(`summary-${user!.id}`);
   return { error: null };
+}
+
+export async function filterTransactions(
+  prevState: FilterState,
+  formData: FormData,
+): Promise<FilterState> {
+  if (formData.get("intent") === "clear") return initialFilterState;
+
+  const result = dateRangeSchema.safeParse({
+    from: formData.get("from"),
+    to: formData.get("to"),
+  });
+  if (!result.success) {
+    return {
+      errors: result.error.flatten().fieldErrors,
+      message: "Please fix the errors below.",
+      success: false,
+      transactions: prevState.transactions,
+    };
+  }
+
+  const { from, to } = result.data;
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user)
+      return {
+        errors: {},
+        message: "Not authenticated.",
+        success: false,
+        transactions: null,
+      };
+
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", user.id)
+      .gte("date", from)
+      .lte("date", to)
+      .order("date", { ascending: false });
+    if (error) throw error;
+
+    // Signed URLs expire, so they're generated per request
+    const transactions = await Promise.all(
+      data.map(async (t) => {
+        if (!t.receipt_path) return { ...t, receiptUrl: null };
+        const { data } = await supabase.storage
+          .from("receipts")
+          .createSignedUrl(t.receipt_path, 3600);
+        return { ...t, receiptUrl: data?.signedUrl ?? null };
+      }),
+    );
+
+    return { errors: {}, message: null, success: true, transactions };
+  } catch (err) {
+    console.error("filterTransactions failed:", err);
+    return {
+      errors: {},
+      message: "Something went wrong. Please try again.",
+      success: false,
+      transactions: prevState.transactions,
+    };
+  }
 }

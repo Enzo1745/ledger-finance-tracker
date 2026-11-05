@@ -1,14 +1,16 @@
 "use client";
 
-import { signOut } from "./actions";
+import { signOut, filterTransactions } from "./actions";
 import { TransactionList } from "./TransactionList";
 import Summary from "./Summary";
 import { AddTransactionForm } from "./AddTransactionForm";
 import { ChangeNameForm } from "./ChangeNameForm";
+import { DateRangeFilterForm } from "./DateRangeFilterForm";
 import { useRealtimeTransactions } from "./useRealtimeTransactions";
+import { initialFilterState } from "./types";
 import type { Transaction, Category } from "./types";
 import Link from "next/link";
-import { useOptimistic } from "react";
+import { useOptimistic, useActionState } from "react";
 import { Suspense } from "react";
 
 interface DashboardClientProps {
@@ -62,6 +64,13 @@ export default function DashboardClient({
     transactions,
     (state, newTx: Transaction) => [newTx, ...state],
   );
+  const [filterState, filterAction, isFiltering] = useActionState(
+    filterTransactions,
+    initialFilterState,
+  );
+  // A successful filter replaces the default monthly list
+  const visibleTransactions =
+    filterState.transactions ?? optimisticTransactions;
 
   return (
     <div className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
@@ -89,10 +98,16 @@ export default function DashboardClient({
           <Summary balance={balance} />
         </Suspense>
 
+        <DateRangeFilterForm
+          state={filterState}
+          formAction={filterAction}
+          isPending={isFiltering}
+        />
+
         {/* Transaction list — always fresh, may be slower */}
         <Suspense fallback={<TransactionsSkeleton />}>
           <TransactionList
-            transactions={optimisticTransactions}
+            transactions={visibleTransactions}
             categories_list={categories_list}
           />
         </Suspense>
