@@ -17,7 +17,6 @@ interface DashboardClientProps {
   email: string;
   display_name: string | undefined;
   transactions_list: Transaction[];
-  balance: number;
   categories_list: Category[];
 }
 
@@ -56,7 +55,6 @@ export default function DashboardClient({
   email,
   display_name,
   transactions_list,
-  balance,
   categories_list,
 }: DashboardClientProps) {
   const transactions = useRealtimeTransactions(transactions_list);
@@ -71,6 +69,7 @@ export default function DashboardClient({
   // A successful filter replaces the default monthly list
   const visibleTransactions =
     filterState.transactions ?? optimisticTransactions;
+  const balance = visibleTransactions.reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <div className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-zinc-950">

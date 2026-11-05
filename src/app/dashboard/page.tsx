@@ -54,7 +54,6 @@ export default async function Dashboard() {
       email={userEmail!}
       display_name={user_profile.display_name}
       transactions_list={transactions_with_urls}
-      balance={summary.total}
       categories_list={categories_list}
     />
   );
