@@ -25,15 +25,12 @@ export default async function Dashboard() {
   }
 
   let summary;
-  try {
-    summary = await getMonthlySummary(supabase, userId!);
-  } catch {
-    return <p>Could not fetch transactions</p>;
-  }
+  summary = await getMonthlySummary(supabase, userId!);
+  if (!summary.ok) return <p>Could not fetch transactions: {summary.error}</p>;
 
   // Signed URLs expire, so they're generated per request, outside the cache.
   const transactions_with_urls = await Promise.all(
-    summary.transactions.map(async (t) => {
+    summary.data.transactions.map(async (t) => {
       if (!t.receipt_path) return { ...t, receiptUrl: null };
       const { data } = await supabase.storage
         .from("receipts")
@@ -43,18 +40,16 @@ export default async function Dashboard() {
   );
 
   let categories_list;
-  try {
-    categories_list = await getCategories();
-  } catch {
-    return <p>Could not fetch categories</p>;
-  }
+  categories_list = await getCategories();
+  if (!categories_list.ok)
+    return <p>Could not fetch transactions: {categories_list.error}</p>;
 
   return (
     <DashboardClient
       email={userEmail!}
       display_name={user_profile.display_name}
       transactions_list={transactions_with_urls}
-      categories_list={categories_list}
+      categories_list={categories_list.data}
     />
   );
 }
