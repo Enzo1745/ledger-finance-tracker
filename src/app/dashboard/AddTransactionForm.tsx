@@ -5,7 +5,7 @@ import { addTransaction } from "./actions";
 import { uploadReceipt } from "./client-actions";
 import { initialState } from "./types";
 import type { Category, Transaction, ActionState } from "./types";
-import { FieldError } from "./FieldError";
+import { FieldError } from "@/components/FieldError";
 
 interface AddTransactionFormProps {
   categories_list: Category[];
@@ -18,6 +18,7 @@ export function AddTransactionForm({
 }: AddTransactionFormProps) {
   const [pathName, setPathName] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [state, formAction, isPending] = useActionState(
     async (prevState: ActionState, formData: FormData) => {
       const amount = parseFloat(formData.get("amount") as string);
@@ -39,16 +40,24 @@ export function AddTransactionForm({
         });
       }
 
-      return addTransaction(prevState, formData);
+      const result = await addTransaction(prevState, formData);
+      // React resets uncontrolled inputs after the action; the controlled
+      // receipt path has to be cleared by hand.
+      if (result.success) setPathName("");
+      return result;
     },
     initialState,
   );
 
   const handleFileChange = async (file: File) => {
     setIsUploading(true);
-    const newPathName = await uploadReceipt(file);
-    if (newPathName) {
-      setPathName(newPathName);
+    setUploadError(null);
+    const result = await uploadReceipt(file);
+    if (result.ok) {
+      setPathName(result.data);
+    } else {
+      setPathName("");
+      setUploadError(result.error);
     }
     setIsUploading(false);
   };
@@ -118,6 +127,7 @@ export function AddTransactionForm({
                 </option>
               ))}
           </select>
+          <FieldError errors={state.errors} field="category_id" />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -141,6 +151,12 @@ export function AddTransactionForm({
               Uploading…
             </span>
           )}
+          {uploadError && (
+            <p style={{ color: "red", fontSize: 12, marginTop: 2 }}>
+              {uploadError}
+            </p>
+          )}
+          <FieldError errors={state.errors} field="receipt_path" />
         </div>
 
         <input

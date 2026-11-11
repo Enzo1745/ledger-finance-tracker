@@ -18,6 +18,10 @@ export interface Category {
   icon: string;
 }
 
+export type Profile = {
+  display_name: string | null;
+};
+
 export type MonthlySummary = {
   total: number;
   transactions: Transaction[];

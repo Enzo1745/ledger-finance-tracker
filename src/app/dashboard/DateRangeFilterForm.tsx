@@ -1,7 +1,7 @@
 "use client";
 
 import type { FilterState } from "./types";
-import { FieldError } from "./FieldError";
+import { FieldError } from "@/components/FieldError";
 
 interface DateRangeFilterFormProps {
   state: FilterState;

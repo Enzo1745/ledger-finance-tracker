@@ -1,6 +1,7 @@
 "use client";
+import { useState, useTransition } from "react";
 import { deleteTransaction, duplicateTransaction } from "./actions";
-import type { Transaction, Category } from "./types";
+import type { Transaction, Category, ActionState } from "./types";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -11,6 +12,16 @@ export function TransactionList({
   transactions,
   categories_list,
 }: TransactionListProps) {
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const run = (action: (id: string) => Promise<ActionState>, id: string) => {
+    startTransition(async () => {
+      const result = await action(id);
+      setActionError(result.success ? null : result.message);
+    });
+  };
+
   // Display: divide by 100 for euros
   const euros = new Intl.NumberFormat("fr-FR", {
     style: "currency",
@@ -23,6 +34,12 @@ export function TransactionList({
         <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           Transactions
         </h2>
+
+        {actionError && (
+          <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-400">
+            {actionError}
+          </p>
+        )}
 
         {transactions.length === 0 ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -74,15 +91,15 @@ export function TransactionList({
                       {euros.format(transaction.amount / 100)}
                     </span>
                     <button
-                      disabled={transaction.pending}
-                      onClick={() => deleteTransaction(transaction.id)}
+                      disabled={transaction.pending || isPending}
+                      onClick={() => run(deleteTransaction, transaction.id)}
                       className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500/30 dark:text-red-400 dark:hover:bg-red-950/40 cursor-pointer"
                     >
                       Delete
                     </button>
                     <button
-                      disabled={transaction.pending}
-                      onClick={() => duplicateTransaction(transaction.id)}
+                      disabled={transaction.pending || isPending}
+                      onClick={() => run(duplicateTransaction, transaction.id)}
                       className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-blue-300 transition-colors hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:text-blue-300 dark:hover:bg-blue-950/40 cursor-pointer"
                     >
                       Duplicate

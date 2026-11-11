@@ -118,7 +118,6 @@ export default function DashboardClient({
           />
           <ChangeNameForm />
         </div>
-        <Link href="/dashboard">Dashboard</Link>
       </main>
     </div>
   );

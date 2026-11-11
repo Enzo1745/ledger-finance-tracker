@@ -1,4 +1,4 @@
-import { ActionState } from "./types";
+import type { ActionState } from "@/app/dashboard/types";
 
 export function FieldError({
   errors,

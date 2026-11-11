@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCategories } from "@/lib/data/categories";
 import { getMonthlySummary } from "@/lib/data/summary";
+import { getProfile } from "@/lib/data/profile";
 import DashboardClient from "./DashboardClient";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -12,21 +14,16 @@ export default async function Dashboard() {
   const headersList = await headers();
   const userId = headersList.get("x-user-id");
   const userEmail = headersList.get("x-user-email");
+  if (!userId) redirect("/login");
 
-  const { data: user_profile, error } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("id", userId)
-    .single();
+  const profile = await getProfile(supabase, userId);
+  if (!profile.ok) return <p>{profile.error}</p>;
 
-  if (error || !user_profile) {
-    console.error("Failed to load profile:", error);
-    return <p>Could not load your profile.</p>;
-  }
+  const summary = await getMonthlySummary(supabase, userId);
+  if (!summary.ok) return <p>{summary.error}</p>;
 
-  let summary;
-  summary = await getMonthlySummary(supabase, userId!);
-  if (!summary.ok) return <p>Could not fetch transactions: {summary.error}</p>;
+  const categories = await getCategories();
+  if (!categories.ok) return <p>{categories.error}</p>;
 
   // Signed URLs expire, so they're generated per request, outside the cache.
   const transactions_with_urls = await Promise.all(
@@ -39,17 +36,12 @@ export default async function Dashboard() {
     }),
   );
 
-  let categories_list;
-  categories_list = await getCategories();
-  if (!categories_list.ok)
-    return <p>Could not fetch transactions: {categories_list.error}</p>;
-
   return (
     <DashboardClient
-      email={userEmail!}
-      display_name={user_profile.display_name}
+      email={userEmail ?? ""}
+      display_name={profile.data.display_name ?? undefined}
       transactions_list={transactions_with_urls}
-      categories_list={categories_list.data}
+      categories_list={categories.data}
     />
   );
 }
