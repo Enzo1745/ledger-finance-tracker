@@ -1,16 +1,16 @@
 "use client";
 
-import { signOut, filterTransactions } from "./actions";
+import { signOut } from "./actions";
 import { TransactionList } from "./TransactionList";
 import Summary from "./Summary";
 import { AddTransactionForm } from "./AddTransactionForm";
 import { ChangeNameForm } from "./ChangeNameForm";
-import { DateRangeFilterForm } from "./DateRangeFilterForm";
+import { FilterBar } from "./FilterBar";
 import { useRealtimeTransactions } from "./useRealtimeTransactions";
-import { initialFilterState } from "./types";
+import { filtersReducer, initialFilters } from "@/lib/filters";
 import type { Transaction, Category } from "./types";
 import Link from "next/link";
-import { useOptimistic, useActionState } from "react";
+import { useOptimistic, useReducer, useMemo } from "react";
 import { Suspense } from "react";
 
 interface DashboardClientProps {
@@ -62,13 +62,30 @@ export default function DashboardClient({
     transactions,
     (state, newTx: Transaction) => [newTx, ...state],
   );
-  const [filterState, filterAction, isFiltering] = useActionState(
-    filterTransactions,
-    initialFilterState,
+  const [filters, dispatch] = useReducer(filtersReducer, initialFilters);
+
+  // Derived state: recomputed only when the list or the filters change.
+  // Dates are "YYYY-MM-DD" strings, so string comparison sorts chronologically.
+  const visibleTransactions = useMemo(
+    () =>
+      optimisticTransactions.filter((t) => {
+        if (filters.type === "income" && t.amount <= 0) return false;
+        if (filters.type === "expense" && t.amount >= 0) return false;
+        if (filters.categoryId && t.category_id !== filters.categoryId)
+          return false;
+        if (filters.from && t.date < filters.from) return false;
+        if (filters.to && t.date > filters.to) return false;
+        if (
+          filters.search &&
+          !t.description
+            ?.toLowerCase()
+            .includes(filters.search.toLowerCase())
+        )
+          return false;
+        return true;
+      }),
+    [optimisticTransactions, filters],
   );
-  // A successful filter replaces the default monthly list
-  const visibleTransactions =
-    filterState.transactions ?? optimisticTransactions;
   const balance = visibleTransactions.reduce((sum, t) => sum + t.amount, 0);
 
   return (
@@ -97,10 +114,10 @@ export default function DashboardClient({
           <Summary balance={balance} />
         </Suspense>
 
-        <DateRangeFilterForm
-          state={filterState}
-          formAction={filterAction}
-          isPending={isFiltering}
+        <FilterBar
+          filters={filters}
+          dispatch={dispatch}
+          categories_list={categories_list}
         />
 
         {/* Transaction list — always fresh, may be slower */}
