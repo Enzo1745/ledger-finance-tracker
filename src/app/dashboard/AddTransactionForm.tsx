@@ -5,7 +5,7 @@ import { addTransaction } from "./actions";
 import { uploadReceipt } from "./client-actions";
 import { initialState } from "./types";
 import type { Category, Transaction, ActionState } from "./types";
-import { FieldError } from "@/components/FieldError";
+import { FieldError } from "@/app/components/FieldError";
 
 interface AddTransactionFormProps {
   categories_list: Category[];

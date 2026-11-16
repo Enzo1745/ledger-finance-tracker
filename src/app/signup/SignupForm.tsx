@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { signup } from "./actions";
 import { initialState } from "@/app/dashboard/types";
-import { FieldError } from "@/components/FieldError";
+import { FieldError } from "@/app/components/FieldError";
 
 const inputClassName =
   "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-600 dark:focus:border-zinc-100 dark:focus:ring-zinc-100/10";

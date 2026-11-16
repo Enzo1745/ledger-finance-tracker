@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Transaction } from "./types";
+import type { Transaction } from "../dashboard/types";
 
 export function useRealtimeTransactions(transactions_list: Transaction[]) {
   const [transactions, setTransactions] = useState(transactions_list);

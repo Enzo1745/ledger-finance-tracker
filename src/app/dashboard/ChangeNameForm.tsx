@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { updateName } from "./actions";
 import { initialState } from "./types";
-import { FieldError } from "@/components/FieldError";
+import { FieldError } from "@/app/components/FieldError";
 
 export function ChangeNameForm() {
   const [state, formAction, isPending] = useActionState(

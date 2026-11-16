@@ -6,11 +6,8 @@ import Summary from "./Summary";
 import { AddTransactionForm } from "./AddTransactionForm";
 import { ChangeNameForm } from "./ChangeNameForm";
 import { FilterBar } from "./FilterBar";
-import { useRealtimeTransactions } from "./useRealtimeTransactions";
-import { filtersReducer, initialFilters } from "@/lib/filters";
+import { useTransactions } from "../hooks/useTransactions";
 import type { Transaction, Category } from "./types";
-import Link from "next/link";
-import { useOptimistic, useReducer, useMemo } from "react";
 import { Suspense } from "react";
 
 interface DashboardClientProps {
@@ -57,36 +54,8 @@ export default function DashboardClient({
   transactions_list,
   categories_list,
 }: DashboardClientProps) {
-  const transactions = useRealtimeTransactions(transactions_list);
-  const [optimisticTransactions, addOptimistic] = useOptimistic(
-    transactions,
-    (state, newTx: Transaction) => [newTx, ...state],
-  );
-  const [filters, dispatch] = useReducer(filtersReducer, initialFilters);
-
-  // Derived state: recomputed only when the list or the filters change.
-  // Dates are "YYYY-MM-DD" strings, so string comparison sorts chronologically.
-  const visibleTransactions = useMemo(
-    () =>
-      optimisticTransactions.filter((t) => {
-        if (filters.type === "income" && t.amount <= 0) return false;
-        if (filters.type === "expense" && t.amount >= 0) return false;
-        if (filters.categoryId && t.category_id !== filters.categoryId)
-          return false;
-        if (filters.from && t.date < filters.from) return false;
-        if (filters.to && t.date > filters.to) return false;
-        if (
-          filters.search &&
-          !t.description
-            ?.toLowerCase()
-            .includes(filters.search.toLowerCase())
-        )
-          return false;
-        return true;
-      }),
-    [optimisticTransactions, filters],
-  );
-  const balance = visibleTransactions.reduce((sum, t) => sum + t.amount, 0);
+  const { transactions, balance, filters, dispatch, addOptimistic } =
+    useTransactions(transactions_list);
 
   return (
     <div className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
@@ -123,7 +92,7 @@ export default function DashboardClient({
         {/* Transaction list — always fresh, may be slower */}
         <Suspense fallback={<TransactionsSkeleton />}>
           <TransactionList
-            transactions={visibleTransactions}
+            transactions={transactions}
             categories_list={categories_list}
           />
         </Suspense>
